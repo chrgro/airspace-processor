@@ -9,11 +9,8 @@ import matplotlib.pyplot as plt
 IGNORE_LIMIT = 0.005  # If an area airsport area intersects an a TMA with less than this
                       # ratio we will ignore it to not create too many tiny areas
 
-FILENAME = 'NorwayAirspace20200610-cleaned.txt'
-#FILENAME='input.txt'
-FILENAME = 'luftrom.fl.txt'
-FILENAME = 'NorwayAirspace 20220412AF-ENNO.txt'
-FILENAME = 'NorwayAirspace 20230425 revA.txt'
+FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
+#FILENAME = 'Polaris-cta.txt'
 OUTPUT='Norway2023-modified.txt'
 #OUTPUT='luftrom-modified.txt'
 
@@ -26,17 +23,19 @@ def to_dms(dd):
 
 class Coordinate:
     def __init__(self, lat=0.0, lon=0.0):
-        if lon < 0.0:
+        if lat < 0.0:
             raise Exception()
         self.lat = lat
         self.lon = lon
 
     def to_utm(self):
+        """Assumes zone 32V which should work ok for Norway"""
         e,n,_,_ = utm.from_latlon(self.lat, self.lon, force_zone_number=32, force_zone_letter='V')
         return e,n
     
     def to_dms(self):
-        return '{0:02d}:{1:02d}:{2:02d} N  {3:02d}:{4:02d}:{5:02d} E'.format(*to_dms(self.lat), *to_dms(self.lon))
+        ew = 'E' if self.lon >= 0 else 'W'
+        return '{0:02d}:{1:02d}:{2:02d} N  {3:02d}:{4:02d}:{5:02d} {ew}'.format(*to_dms(self.lat), *to_dms(abs(self.lon)), ew=ew)
 
     def tuple(self):
         return self.lat, self.lon
@@ -126,25 +125,32 @@ class Airspace:
                 # Add frequency to end of name of airspace
                 self.name += f" {self.frequency}"
                                    
-    def process_area(self):
+    def process_area(self, *airspaces):
         """Creates shapely areas for those airspaces we need to work on.
            Converts from latitude/longitude to UTM coordinates in the process, so
            shapely can be used."""
-        if self.key in tma_airspaces or self.key in airsport_airspaces:
-            self.area = Polygon([c.to_utm() for c in self.coordinates])
+        for space in airspaces:
+            if self.key in space and not self.area:
+                self.area = Polygon([c.to_utm() for c in self.coordinates])
         return self.area
 
     def intersect_area(self, splitting_airspace):
-        """Shrink area to only be part inside splitting airspace"""
+        """Returns a new Airspace which is the intersection with splitting_airspace"""
+
+        if splitting_airspace.area.disjoint(self.area) or splitting_airspace.area.touches(self.area):
+            # No point in subtracting if the areas don't overlap
+            return None
+    
         try:
             intersection = self.area.intersection(splitting_airspace.area)
         except shapely.errors.TopologicalError as e:
             # If there is an error, make a graphical plot so it's easier to see what is wrong
-            self.plot()
+            plt.title(self.name + ' intersecting ' + splitting_airspace.name)
+            self.plot(show_points=True)
             splitting_airspace.plot('r-')
-            c = Coordinate.from_utm(666976.58651643002, 6644039.1815558635)
-            print(c.to_dms())
-            plt.plot(c.lon, c.lat, 'ro')
+#            c = Coordinate.from_utm()
+#            print(c.to_dms())
+#            plt.plot(c.lon, c.lat, 'ro')
             plt.show()
 
         
@@ -154,21 +160,23 @@ class Airspace:
         # unfortunately not accurate enough so that edges for airsport areas completely
         # match the containing TMA airspace
         diff = intersection.area / self.area.area
-        if diff < IGNORE_LIMIT or diff > (1.0 - IGNORE_LIMIT):
-            return self
+        if diff < IGNORE_LIMIT: # or diff > (1.0 - IGNORE_LIMIT):
+            if splitting_airspace.name.startswith('Starmoen A'):
+                print(diff)
+            return None
 
         # Create a new airspace object for the intersecting part of the airspace.
         # Only the intersections will be used in final file format
         new = copy.deepcopy(self)
+        new.name = splitting_airspace.name
         new.comment = '* Part of {} which is intersecting {} at {}'.format(new.name, splitting_airspace.name, splitting_airspace.limit_low)
         new.area = intersection
         new.split_areas = []
+        new.frequency = splitting_airspace.frequency
 
-        # Add this new area to original area's split off areas
-        self.split_areas.append(new)
         return new
             
-    def plot(self, color='b-', area=None):
+    def plot(self, color='b-', area=None, show_points=False):
         """Make a plot of an area.  Use plt.show() to show the plot later"""
         if not area:
             area = self.area
@@ -191,14 +199,32 @@ class Airspace:
             coord = [Coordinate.from_utm(e,n).tuple() for e,n in c]
             # Plot the outline
             plt.plot(*reversed(tuple(zip(*coord))), color)
-    
-    def subtract(self, airspace):
-        """Subtracts the @airspace from this airspace's area"""
-        if airspace.area.disjoint(self.area) or airspace.area.touches(self.area):
-            # No point in subtracting if the areas don't overlap
+            # Plot coordinate
+            if show_points:
+                for cor in coord:
+                    plt.plot(*reversed(cor), color[0] + 'o')
+
+    def sectorize(self, sector):
+        """Intersects an airspace with a sectors, so that it can be divided up into sectors"""
+        sector_area = self.intersect_area(sector)
+        if not sector_area:
             return
 
-        airspace = airspace.intersect_area(self)
+        self.split_areas.append(sector_area)
+                    
+    def subtract(self, airspace):
+        """Subtracts the @airspace from this airspace's area"""
+
+        if self.area.area == 0.0:
+            # No area left
+            return
+
+        splitoff_airspace = self.intersect_area(airspace)
+        if not splitoff_airspace:
+            # Areas don't intersect, nothing more to do here
+            return
+
+        # The splitting airspace (airsport area) has this as the containing TMA
         airspace.containing_tma = self
 
         if PLOT_SUBTRACTIONS:
@@ -206,19 +232,27 @@ class Airspace:
             self.plot()
             airspace.plot('r-')
 
-        orig_area = self.area.area
-        self.area = self.area.difference(airspace.area)
+        orig_area_size = self.area.area
+
+        # Uncomment to convert UTM co-ordinates from shaply when there are geometries with errors
+        #    c = Coordinate.from_utm(655753.67995712569, 7005045.6455644593)
+        #    print(airspace.name, c.to_dms())
+
+        # The intersecting area is split off from this airspace
+        self.area = self.area.difference(splitoff_airspace.area)
+
         if isinstance(self.area, MultiPolygon):
             # Remove tiny nuisance areas created by the subtraction
             filtered = []
             for a in self.area.geoms:
-                if a.area / orig_area > IGNORE_LIMIT:
+                if a.area / orig_area_size > IGNORE_LIMIT:
                     filtered.append(a)
             self.area = MultiPolygon(filtered)
 
         if PLOT_SUBTRACTIONS:
             plt.title(self.name + ' minus ' + airspace.name)
             plt.show()
+
                 
     def remove_holes(self):
         if not self.area or not self.area.interiors:
@@ -236,16 +270,24 @@ class Airspace:
         if self.split_areas:
             # One entry for each split off sub area
             return ''.join([str(a) for a in self.split_areas])
-        
+
+        if self.area and self.area.area == 0.0:
+            return ''
+
         lines = []
 
+#        print(self.name, self.containing_tma.name)
+
         if self.containing_tma:
+            assert not self.containing_tma.split_areas, "Overlying TMA should not itself have split off areas, it is itself a split off area from the main TMA"
+
             # Create an entry representing the TMA over the airsport area
             overlying_tma = copy.copy(self.containing_tma)
             overlying_tma.comment = "Part of {} lying over {}".format(overlying_tma.name, self.name)
             overlying_tma.area = self.area                # Same area as air sport area
             overlying_tma.limit_low = self.limit_high
             overlying_tma.limit_high = self.containing_tma.limit_high
+
 
             # Set lower limit of airsport area to be lower limit of TMA, not ground
             self.limit_low = self.containing_tma.limit_low
@@ -314,7 +356,17 @@ class Airspace:
 def parse(filename):
     airspace = None
     airspaces = []
-    content = []
+    content = []     # Output content, contains either strings, or Airspace objects which can be printed
+    
+    polaris_airspaces = {}     # Polaris airspace
+    tma_airspaces = {}         # Each TMA which has aerial sport areas
+    airsport_airspaces = {}    # Link to TMA airspace from each aerial sport areas
+
+    for tma,areas in airspace_config.airsport_areas.items():
+        tma_airspaces[tma.upper()] = []
+        for a in areas:
+            airsport_airspaces[a] = []
+    
 
     for line in open(filename, encoding='iso8859-1'):
 #    for line in open(filename, encoding='utf-8'):        
@@ -334,13 +386,19 @@ def parse(filename):
             continue
         elif field == 'AN':
             airspace.name = rest
+
+            if airspace.name.upper().startswith('POLARIS'):
+                airspace.key = airspace.name
+                polaris_airspaces[airspace.name] = airspace
+
+            # Check if this TMA has any airsport areas
             for tma,airsport in airspace_config.airsport_areas.items():
                 tma = tma.upper()
-                airsport = airsport
                 if airspace.name.upper().startswith(tma):
                     airspace.airsport_names = airsport
                     airspace.key = tma
                     tma_airspaces[tma].append(airspace)
+                    
                 for name in airsport:
                     if airspace.name.upper().startswith(name.upper()):
                         airspace.key = name
@@ -370,7 +428,7 @@ def parse(filename):
     r = re.compile(r'((.*)(TMA|CTA|TIA|TIZ|CTR)\s+(\d*))')
     freqs = []
     for a in airspaces:
-        a.process_area()
+        a.process_area(airsport_airspaces, tma_airspaces, polaris_airspaces)
 
         if False and a.frequency:
             name = a.name
@@ -381,15 +439,19 @@ def parse(filename):
                 name = m.group(0)
             freqs.append((f"    '{name}' : '{a.frequency}',"))
         a.add_frequency()
-
+        
     # Warn about airspaces in config file which we didn't not find in airspace file
     for freq_name in airspace_config.airspace_frequencies.keys():
         if freq_name not in found_frequencies:
+            continue
             print(f'Warning: Airspace from frequencies config file not found in airspace file: {freq_name}')
 
-    return content
+    return content, tma_airspaces, polaris_airspaces, airsport_airspaces
 
 def parse_acc_sectors(filename):
+    """Parses a simple file with ACC sectors.
+    This is unexplainably not part of AIP, so we have a special file just with sector coordinates"""
+    
     name_re = re.compile(r'ACC SECTOR (\d+)')
     a = Airspace()
     spaces = []
@@ -398,14 +460,16 @@ def parse_acc_sectors(filename):
         if match := name_re.match(line):
             a = Airspace()
             a.name = f'Polaris S{match.group(1)}'
-            a.limit_high = 'FL250'
-            a.limit_low = 'FL115'
-            a.cls = 'C'
+            a.key = a.name
             spaces.append(a)
         else:
             coord = Coordinate.from_string(line)
             a.coordinates.append(coord)
 
+    for a in spaces:
+        a.process_area([a.key])
+        a.add_frequency()
+            
     return spaces
 
 def subtract_airsport_airspaces():
@@ -420,14 +484,14 @@ def subtract_airsport_airspaces():
                 for area in airsports:
                     area.cls = airspace.cls
                     airspace.subtract(area)
-            
 
-airsport_airspaces = {}
-tma_airspaces = {}
-for tma,areas in airspace_config.airsport_areas.items():
-    tma_airspaces[tma.upper()] = []
-    for a in areas:
-        airsport_airspaces[a] = []
+
+def sectorize_polaris(areas, sectors):
+    # Go through all Polaris areas and divide into sectors
+    for area in areas:
+        for sector in sectors:
+            #sector.subtract(area)
+            area.sectorize(sector)
 
 
 test_data = \
@@ -447,13 +511,13 @@ def convert_aip_to_openair(data):
 
 if __name__ == '__main__':
     #convert_aip_to_openair(test_data)
-    sectors = parse_acc_sectors('acc-sectors.txt')
-    for s in sectors:
-        print(s)
-    sys.exit()
+    polaris_sectors = parse_acc_sectors('acc-sectors.txt')
 
-    content = parse(FILENAME)
+    content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(FILENAME)
+    sectorize_polaris(polaris_airspaces.values(), polaris_sectors)
+    
     subtract_airsport_airspaces()
+
     output = open(OUTPUT, 'w')
     for line in content:
         output.write(str(line) + '\n')
