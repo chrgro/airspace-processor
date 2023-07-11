@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 
 IGNORE_LIMIT = 0.005  # If an area airsport area intersects an a TMA with less than this
                       # ratio we will ignore it to not create too many tiny areas
+IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller than this (meters squared)
 
 FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
-#FILENAME = 'Polaris-cta.txt'
+SECTORS_FILENAME = 'acc-sectors.txt'
 OUTPUT='Norway2023-modified.txt'
-#OUTPUT='luftrom-modified.txt'
 
 PLOT_SUBTRACTIONS=False
 
@@ -160,7 +160,7 @@ class Airspace:
         # unfortunately not accurate enough so that edges for airsport areas completely
         # match the containing TMA airspace
         diff = intersection.area / self.area.area
-        if diff < IGNORE_LIMIT: # or diff > (1.0 - IGNORE_LIMIT):
+        if diff < IGNORE_LIMIT and intersection.area < 20.0 * 1000 * 1000: # or diff > (1.0 - IGNORE_LIMIT):
             if splitting_airspace.name.startswith('Starmoen A'):
                 print(diff)
             return None
@@ -275,8 +275,6 @@ class Airspace:
             return ''
 
         lines = []
-
-#        print(self.name, self.containing_tma.name)
 
         if self.containing_tma:
             assert not self.containing_tma.split_areas, "Overlying TMA should not itself have split off areas, it is itself a split off area from the main TMA"
@@ -462,7 +460,7 @@ def parse_acc_sectors(filename):
             a.name = f'Polaris S{match.group(1)}'
             a.key = a.name
             spaces.append(a)
-        else:
+        elif line.strip():  # ignore blank lines
             coord = Coordinate.from_string(line)
             a.coordinates.append(coord)
 
@@ -490,7 +488,6 @@ def sectorize_polaris(areas, sectors):
     # Go through all Polaris areas and divide into sectors
     for area in areas:
         for sector in sectors:
-            #sector.subtract(area)
             area.sectorize(sector)
 
 
@@ -511,7 +508,7 @@ def convert_aip_to_openair(data):
 
 if __name__ == '__main__':
     #convert_aip_to_openair(test_data)
-    polaris_sectors = parse_acc_sectors('acc-sectors.txt')
+    polaris_sectors = parse_acc_sectors(SECTORS_FILENAME)
 
     content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(FILENAME)
     sectorize_polaris(polaris_airspaces.values(), polaris_sectors)
