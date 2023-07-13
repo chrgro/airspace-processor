@@ -11,6 +11,7 @@ IGNORE_LIMIT = 0.005  # If an area airsport area intersects an a TMA with less t
 IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller than this (meters squared)
 
 FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
+#FILENAME = 'luftrom-2023.fl.txt'
 SECTORS_FILENAME = 'acc-sectors.txt'
 OUTPUT='Norway2023-modified.txt'
 
@@ -148,7 +149,7 @@ class Airspace:
             plt.title(self.name + ' intersecting ' + splitting_airspace.name)
             self.plot(show_points=True)
             splitting_airspace.plot('r-')
-#            c = Coordinate.from_utm()
+#            c = Coordinate.from_utm(437819.00011702196, 6826375.3107311446)
 #            print(c.to_dms())
 #            plt.plot(c.lon, c.lat, 'ro')
             plt.show()
