@@ -162,8 +162,6 @@ class Airspace:
         # match the containing TMA airspace
         diff = intersection.area / self.area.area
         if diff < IGNORE_LIMIT and intersection.area < 20.0 * 1000 * 1000: # or diff > (1.0 - IGNORE_LIMIT):
-            if splitting_airspace.name.startswith('Starmoen A'):
-                print(diff)
             return None
 
         # Create a new airspace object for the intersecting part of the airspace.
@@ -229,6 +227,7 @@ class Airspace:
         airspace.containing_tma = self
 
         if PLOT_SUBTRACTIONS:
+        #if self.name.startswith('Farris TMA 6'):
             plt.title(self.name + ' minus ' + airspace.name)
             self.plot()
             airspace.plot('r-')
@@ -248,9 +247,13 @@ class Airspace:
             for a in self.area.geoms:
                 if a.area / orig_area_size > IGNORE_LIMIT:
                     filtered.append(a)
-            self.area = MultiPolygon(filtered)
+            if len(filtered) == 1:
+                self.area = filtered[0]
+            else:
+                self.area = MultiPolygon(filtered)
 
         if PLOT_SUBTRACTIONS:
+#        if self.name.startswith('Farris TMA 6'):
             plt.title(self.name + ' minus ' + airspace.name)
             plt.show()
 
@@ -490,7 +493,6 @@ def sectorize_polaris(areas, sectors):
     for area in areas:
         for sector in sectors:
             area.sectorize(sector)
-
 
 test_data = \
 """592953N 0093542E - 592426N 0093524E - 592112N 0092731E - 592255N 0091923E - 592953N 0093542E"""
