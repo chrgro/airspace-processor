@@ -2,13 +2,15 @@
 
 import utm, copy, shapely, re, sys
 from shapely.geometry import Polygon,MultiPolygon,GeometryCollection,LineString
-from shapely import ops
+from shapely import ops, set_precision
 import airspace_config
 import matplotlib.pyplot as plt
 
 IGNORE_LIMIT = 0.005  # If an area airsport area intersects an a TMA with less than this
                       # ratio we will ignore it to not create too many tiny areas
 IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller than this (meters squared)
+PRECISION = 20.0   # Precision used in calculations in m.  If this is too small it will create
+                   # almost empty "lines" when doing the area subtractions due to rounding errors
 
 FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
 #FILENAME = 'luftrom-2023.fl.txt'
@@ -133,7 +135,7 @@ class Airspace:
            shapely can be used."""
         for space in airspaces:
             if self.key in space and not self.area:
-                self.area = Polygon([c.to_utm() for c in self.coordinates])
+                self.area = set_precision(Polygon([c.to_utm() for c in self.coordinates]), PRECISION)
         return self.area
 
     def intersect_area(self, splitting_airspace):
