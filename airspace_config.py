@@ -5,7 +5,8 @@ airsport_areas = {
     'Farris TMA' : ['HVITTINGFOSS', 'GVARV', 'LUNDE', 'DRANGEDAL', 'BOE', 'BØ', 'TOKKE'],
     'WestCoast TMA' : ['KVAM TRANSITAREA', 'GULLFJELLET'],
     'Værnes TMA' : ['NIDAROS', 'GAULDAL', 'MERÅKER'],
-#    'Polaris CTA' : ['Bjorli Wave', 'Lesja Wave'],
+    'Polaris CTA' : ['BJORLI WAVE', 'LESJA WAVE', 'DOVRE WAVE', 'OPPDAL WAVE', 'VAAGAA WAVE',
+                     'RONDANE WAVE', 'RINGEBU WAVE', 'JOTUNHEIMEN WAVE', 'TYNSET'],
     }
 
 airspace_frequencies = {

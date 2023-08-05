@@ -12,6 +12,7 @@ IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller
 
 FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
 #FILENAME = 'luftrom-2023.fl.txt'
+#FILENAME="polaris.txt"
 SECTORS_FILENAME = 'acc-sectors.txt'
 OUTPUT='Norway2023-modified.txt'
 
@@ -168,43 +169,17 @@ class Airspace:
         # Only the intersections will be used in final file format
         new = copy.deepcopy(self)
         new.name = splitting_airspace.name
-        new.comment = '* Part of {} which is intersecting {} at {}'.format(new.name, splitting_airspace.name, splitting_airspace.limit_low)
+        new.comment = '* Part of {} which is intersecting {}'.format(self.name, splitting_airspace.name)
+        if splitting_airspace.limit_low:
+            new.comment += f'at {splitting_airspace.limit_low}'
         new.area = intersection
         new.split_areas = []
         new.frequency = splitting_airspace.frequency
 
         return new
-            
-    def plot(self, color='b-', area=None, show_points=False):
-        """Make a plot of an area.  Use plt.show() to show the plot later"""
-        if not area:
-            area = self.area
-
-        # Get all the coordinates of all outlines we need to plot
-        coords = []
-        if isinstance(area, MultiPolygon) or isinstance(area, GeometryCollection):
-            for a in area.geoms:
-                if isinstance(a, LineString):
-                    continue
-                #                if a.interiors:
-                #                    print('Has holes:', self.name)
-                coords.append(a.exterior.coords)
-        else:
-            coords.append(area.exterior.coords)
-
-        # Make a plot for each outline
-        for c in coords:
-            # Transform coordinates to latitude and logitude
-            coord = [Coordinate.from_utm(e,n).tuple() for e,n in c]
-            # Plot the outline
-            plt.plot(*reversed(tuple(zip(*coord))), color)
-            # Plot coordinate
-            if show_points:
-                for cor in coord:
-                    plt.plot(*reversed(cor), color[0] + 'o')
 
     def sectorize(self, sector):
-        """Intersects an airspace with a sectors, so that it can be divided up into sectors"""
+        """Intersects an airspace with sectors, so that it can be divided up into sectors"""
         sector_area = self.intersect_area(sector)
         if not sector_area:
             return
@@ -218,44 +193,53 @@ class Airspace:
             # No area left
             return
 
-        splitoff_airspace = self.intersect_area(airspace)
-        if not splitoff_airspace:
-            # Areas don't intersect, nothing more to do here
-            return
+        # If the area we are subtracting from already consist of several sub areas, then
+        # we need to subtract from each of them.
+        # (typically Polaris has been split into sectors, which we then have to subtract wave
+        #  sectors from)
+        if self.split_areas:
+            subareas = self.split_areas
+        else:
+            subareas = [self]
 
-        # The splitting airspace (airsport area) has this as the containing TMA
-        airspace.containing_tma = self
+        for subarea in subareas:
+            splitoff_airspace = subarea.intersect_area(airspace)
 
-        if PLOT_SUBTRACTIONS:
-        #if self.name.startswith('Farris TMA 6'):
-            plt.title(self.name + ' minus ' + airspace.name)
-            self.plot()
-            airspace.plot('r-')
+            if not splitoff_airspace:
+                # Areas don't intersect, nothing more to do here
+                continue
 
-        orig_area_size = self.area.area
+            # The splitting airspace (airsport area) has this as the containing TMA
+            airspace.containing_tma = subarea
 
-        # Uncomment to convert UTM co-ordinates from shaply when there are geometries with errors
-        #    c = Coordinate.from_utm(655753.67995712569, 7005045.6455644593)
-        #    print(airspace.name, c.to_dms())
+            if PLOT_SUBTRACTIONS:
+                plt.title(subarea.name + ' minus ' + airspace.name)
+                subarea.plot()
+                airspace.plot('r-')
 
-        # The intersecting area is split off from this airspace
-        self.area = self.area.difference(splitoff_airspace.area)
+            orig_area_size = subarea.area.area
 
-        if isinstance(self.area, MultiPolygon):
-            # Remove tiny nuisance areas created by the subtraction
-            filtered = []
-            for a in self.area.geoms:
-                if a.area / orig_area_size > IGNORE_LIMIT:
-                    filtered.append(a)
-            if len(filtered) == 1:
-                self.area = filtered[0]
-            else:
-                self.area = MultiPolygon(filtered)
+            # Uncomment to convert UTM co-ordinates from shaply when there are geometries with errors
+            #    c = Coordinate.from_utm(655753.67995712569, 7005045.6455644593)
+            #    print(airspace.name, c.to_dms())
 
-        if PLOT_SUBTRACTIONS:
-#        if self.name.startswith('Farris TMA 6'):
-            plt.title(self.name + ' minus ' + airspace.name)
-            plt.show()
+            # The intersecting area is split off from this airspace
+            subarea.area = subarea.area.difference(splitoff_airspace.area)
+
+            if isinstance(subarea.area, MultiPolygon):
+                # Remove tiny nuisance areas created by the subtraction
+                filtered = []
+                for a in subarea.area.geoms:
+                    if a.area / orig_area_size > IGNORE_LIMIT:
+                        filtered.append(a)
+                if len(filtered) == 1:
+                    subarea.area = filtered[0]
+                else:
+                    subarea.area = MultiPolygon(filtered)
+
+            if PLOT_SUBTRACTIONS:
+                plt.title(subarea.name + ' minus ' + airspace.name)
+                plt.show()
 
                 
     def remove_holes(self):
@@ -281,7 +265,7 @@ class Airspace:
         lines = []
 
         if self.containing_tma:
-            assert not self.containing_tma.split_areas, "Overlying TMA should not itself have split off areas, it is itself a split off area from the main TMA"
+            #assert not self.containing_tma.split_areas, ("Overlying TMA (%s) should not itself have split off areas, it is itself a split off area from the main TMA" % {self.containing_tma.name})
 
             # Create an entry representing the TMA over the airsport area
             overlying_tma = copy.copy(self.containing_tma)
@@ -354,7 +338,35 @@ class Airspace:
             res += str(overlying_tma)
         
         return res
-        
+
+    def plot(self, color='b-', area=None, show_points=False):
+        """Make a plot of an area.  Use plt.show() to show the plot later"""
+        if not area:
+            area = self.area
+
+        # Get all the coordinates of all outlines we need to plot
+        coords = []
+        if isinstance(area, MultiPolygon) or isinstance(area, GeometryCollection):
+            for a in area.geoms:
+                if isinstance(a, LineString):
+                    continue
+                #                if a.interiors:
+                #                    print('Has holes:', self.name)
+                coords.append(a.exterior.coords)
+        else:
+            coords.append(area.exterior.coords)
+
+        # Make a plot for each outline
+        for c in coords:
+            # Transform coordinates to latitude and logitude
+            coord = [Coordinate.from_utm(e,n).tuple() for e,n in c]
+            # Plot the outline
+            plt.plot(*reversed(tuple(zip(*coord))), color)
+            # Plot coordinate
+            if show_points:
+                for cor in coord:
+                    plt.plot(*reversed(cor), color[0] + 'o')
+
 def parse(filename):
     airspace = None
     airspaces = []
@@ -396,6 +408,7 @@ def parse(filename):
             # Check if this TMA has any airsport areas
             for tma,airsport in airspace_config.airsport_areas.items():
                 tma = tma.upper()
+
                 if airspace.name.upper().startswith(tma):
                     airspace.airsport_names = airsport
                     airspace.key = tma
