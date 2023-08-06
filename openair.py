@@ -169,16 +169,27 @@ class Airspace:
 
         # Create a new airspace object for the intersecting part of the airspace.
         # Only the intersections will be used in final file format
-        new = copy.deepcopy(self)
-        new.name = splitting_airspace.name
-        new.comment = '* Part of {} which is intersecting {}'.format(self.name, splitting_airspace.name)
+        new_containing = copy.deepcopy(self)
+        new_containing.name = splitting_airspace.name
+        new_containing.comment = f'Part of {self.name} which is intersecting {splitting_airspace.name}'
         if splitting_airspace.limit_low:
-            new.comment += f'at {splitting_airspace.limit_low}'
-        new.area = intersection
-        new.split_areas = []
-        new.frequency = splitting_airspace.frequency
+            new_containing.comment += f'at {splitting_airspace.limit_low}'
+        new_containing.area = intersection
+        new_containing.split_areas = []
+        new_containing.frequency = splitting_airspace.frequency
 
-        return new
+        # If the splitting airsport area does is not entirely lie within self's airspace,
+        # then we need to split the airsport area too
+        new_airsport = copy.deepcopy(splitting_airspace)
+        new_airsport.name = splitting_airspace.name
+        new_airsport.comment = f'Part of {splitting_airspace.name} which lies inside {self.name} {self.limit_low}'
+        new_airsport.area = intersection
+        new_airsport.limit_low = self.limit_low
+        new_airsport.containing_tma = None  # Assumes that the same containing sector lies over the entire airsport area
+        new_airsport.split_areas = []
+        splitting_airspace.split_areas.append(new_airsport)
+
+        return new_containing
 
     def sectorize(self, sector):
         """Intersects an airspace with sectors, so that it can be divided up into sectors"""
@@ -211,13 +222,15 @@ class Airspace:
                 # Areas don't intersect, nothing more to do here
                 continue
 
-            # The splitting airspace (airsport area) has this as the containing TMA
-            airspace.containing_tma = subarea
-
             if PLOT_SUBTRACTIONS:
                 plt.title(subarea.name + ' minus ' + airspace.name)
                 subarea.plot()
                 airspace.plot('r-')
+                plt.title(subarea.name + ' minus ' + airspace.name)
+                plt.show()
+
+            # The splitting airspace (airsport area) has this as the containing TMA
+            airspace.containing_tma = subarea
 
             orig_area_size = subarea.area.area
 
@@ -239,11 +252,6 @@ class Airspace:
                 else:
                     subarea.area = MultiPolygon(filtered)
 
-            if PLOT_SUBTRACTIONS:
-                plt.title(subarea.name + ' minus ' + airspace.name)
-                plt.show()
-
-                
     def remove_holes(self):
         if not self.area or not self.area.interiors:
             return
@@ -257,14 +265,10 @@ class Airspace:
 
     def __str__(self):
         """A string in OpenAir format representing this airspace"""
-        if self.split_areas:
-            # One entry for each split off sub area
-            return ''.join([str(a) for a in self.split_areas])
 
-        if self.area and self.area.area == 0.0:
+        if self.area is not None and self.area.is_empty:
+            assert not self.split_areas
             return ''
-
-        lines = []
 
         if self.containing_tma:
             #assert not self.containing_tma.split_areas, ("Overlying TMA (%s) should not itself have split off areas, it is itself a split off area from the main TMA" % {self.containing_tma.name})
@@ -281,7 +285,20 @@ class Airspace:
             self.limit_low = self.containing_tma.limit_low
         else:
             overlying_tma = None
-        
+
+        if self.split_areas:
+            # One entry for each split off sub area
+            res = ''.join([str(a) for a in self.split_areas])
+
+            # Add one entry for overlying airspace
+            # (assumes the same airspace lies over all of the the airsport area)
+            if overlying_tma:
+                return str(overlying_tma) + res
+            else:
+                return res
+
+        lines = []
+
         if not (self.cls and self.name and self.limit_low and self.limit_high) or\
            not (self.coordinates or self.center or self.arc_radius):
             print ('Missing information! ' + self.name)
@@ -311,7 +328,7 @@ class Airspace:
         # Create OpenAir entry for each set of coordinates
         for coords in coordinates:
             if self.comment:
-                lines.append(self.comment)
+                lines.append('* ' + self.comment)
             lines.append('AC ' + self.cls)
             lines.append('AN ' + self.name)
             if self.frequency:
@@ -534,7 +551,17 @@ if __name__ == '__main__':
     subtract_airsport_airspaces()
 
     output = open(OUTPUT, 'w')
+    empty_line = False
     for line in content:
-        output.write(str(line) + '\n')
+        content = str(line).strip()
+        if not content:
+            # Skip multiple empty lines
+            if empty_line:
+                continue
+            empty_line = True
+        else:
+            empty_line = False
+
+        output.write(content + '\n')
     output.close()
     print('Result written to', OUTPUT)
