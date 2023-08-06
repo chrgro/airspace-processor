@@ -12,9 +12,11 @@ IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller
 PRECISION = 20.0   # Precision used in calculations in m.  If this is too small it will create
                    # almost empty "lines" when doing the area subtractions due to rounding errors
 
+LOCAL_ADDITIONS = 'local-additions.txt'
 FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
 #FILENAME = 'luftrom-2023.fl.txt'
 #FILENAME="polaris.txt"
+FILENAME = 'luftrom.fl.txt'
 SECTORS_FILENAME = 'acc-sectors.txt'
 OUTPUT='Norway2023-modified.txt'
 
@@ -40,6 +42,9 @@ class Coordinate:
     def to_dms(self):
         ew = 'E' if self.lon >= 0 else 'W'
         return '{0:02d}:{1:02d}:{2:02d} N  {3:02d}:{4:02d}:{5:02d} {ew}'.format(*to_dms(self.lat), *to_dms(abs(self.lon)), ew=ew)
+
+    def to_openair(self):
+        return 'DP ' + self.to_dms()
 
     def tuple(self):
         return self.lat, self.lon
@@ -79,6 +84,38 @@ class Coordinate:
     def __repr__(self):
         return '{0:.4f}N {1:.4f}E'.format(self.lat, self.lon)
 
+class ArcSegment:
+    def __init__(self, coord1, coord2):
+        self.coord1 = coord1
+        self.coord2 = coord2
+
+    def to_openair(self):
+        return 'DB ' + self.coord1.to_dms() + ', ' + self.coord2.to_dms()
+
+class Circle:
+    def __init__(self, radius):
+        self.radius = radius
+
+    def to_openair(self):
+        return 'DC ' + self.radius
+
+class Parameter:
+    def __init__(self, direction=None, center=None, width=None, zoom=None):
+        self.direction = direction
+        self.center = center
+        self.width = width
+        self.zoom = zoom
+    
+    def to_openair(self):
+        if self.direction:
+            return f'V D={self.direction}'
+        if self.center:
+            return f'V X={self.center.to_dms()}'
+        if self.width:
+            return f'V W={self.width}'
+        if self.zoom:
+            return f'V Z={self.zoom}'
+
 # To check that all frequencies in config file are used
 # (could catch error where an airspace has changed name from config)
 found_frequencies = set()
@@ -94,10 +131,6 @@ class Airspace:
         self.key = None
         self.limit_low = None
         self.limit_high = None
-        self.center = None
-        self.radius = None
-        self.arc_radius = None
-        self.arc = None
         self.frequency = None
         self.controller = None
         self.coordinates = []
@@ -337,17 +370,10 @@ class Airspace:
                 lines.append('AG ' + self.controller)
             lines.append('AL ' + self.limit_low)
             lines.append('AH ' + self.limit_high)
-            if self.center:
-                lines.append('V ' + self.center)
-            if self.arc_radius:
-                lines.append('DA ' + self.arc_radius)
-            if self.arc:
-                lines.append('DB ' + self.arc)
-            if self.radius:
-                lines.append('DC ' + self.radius)
 
             for c in coords:
-                lines.append('DP ' + c.to_dms())
+                lines.append(c.to_openair())
+
             lines.append('\n*')
 
         res = '\n'.join(lines) + '\n'
@@ -386,7 +412,7 @@ class Airspace:
                 for cor in coord:
                     plt.plot(*reversed(cor), color[0] + 'o')
 
-def parse(filename):
+def parse(*filenames):
     airspace = None
     airspaces = []
     content = []     # Output content, contains either strings, or Airspace objects which can be printed
@@ -395,70 +421,85 @@ def parse(filename):
     tma_airspaces = {}         # Each TMA which has aerial sport areas
     airsport_airspaces = {}    # Link to TMA airspace from each aerial sport areas
 
+    # Prepare airspace config first
     for tma,areas in airspace_config.airsport_areas.items():
         tma_airspaces[tma.upper()] = []
         for a in areas:
             airsport_airspaces[a] = []
     
+    for filename in filenames:
+    #    for line in open(filename, encoding='iso8859-1'):
+        for line in open(filename, encoding='utf-8'):        
+            line = line.strip()
+            if len(line) < 2 or line.startswith('*'):
+                content.append(line)
+                continue
 
-    for line in open(filename, encoding='iso8859-1'):
-#    for line in open(filename, encoding='utf-8'):        
-        line = line.strip()
-        if len(line) < 2 or line.startswith('*'):
-            content.append(line)
-            continue
+            field,rest = line[:2],line[2:].strip()
 
-        field,rest = line[:2],line[2:].strip()
+            if field == 'AC':
+                airspace = Airspace()
+                airspace.cls = rest
+                airspaces.append(airspace)
+                content.append(airspace)
+            elif not airspace:
+                continue
+            elif field == 'AN':
+                airspace.name = rest
 
-        if field == 'AC':
-            airspace = Airspace()
-            airspace.cls = rest
-            airspaces.append(airspace)
-            content.append(airspace)
-        elif not airspace:
-            continue
-        elif field == 'AN':
-            airspace.name = rest
+                if airspace.name.upper().startswith('POLARIS'):
+                    airspace.key = airspace.name
+                    polaris_airspaces[airspace.name] = airspace
 
-            if airspace.name.upper().startswith('POLARIS'):
-                airspace.key = airspace.name
-                polaris_airspaces[airspace.name] = airspace
+                # Check if this TMA has any airsport areas
+                for tma,airsport in airspace_config.airsport_areas.items():
+                    tma = tma.upper()
 
-            # Check if this TMA has any airsport areas
-            for tma,airsport in airspace_config.airsport_areas.items():
-                tma = tma.upper()
+                    if airspace.name.upper().startswith(tma):
+                        airspace.airsport_names = airsport
+                        airspace.key = tma
+                        tma_airspaces[tma].append(airspace)
+                        
+                    for name in airsport:
+                        if airspace.name.upper().startswith(name.upper()):
+                            airspace.key = name
+                            airsport_airspaces[name].append(airspace)
+            elif field == 'AL':
+                airspace.limit_low = rest
+            elif field == 'AH':
+                airspace.limit_high = rest
+            elif field == 'AF':
+                airspace.frequency = rest
+            elif field == 'AG':
+                airspace.controller = rest
+            elif field == 'DP':
+                coord = Coordinate.from_string(rest)
+                airspace.coordinates.append(coord)
+            elif field == 'V ':
+                parameter,value = rest.split('=', 1)
+                if parameter == 'X':
+                    coord = Coordinate.from_string(value)
+                    airspace.coordinates.append(Parameter(center=coord))
+                elif parameter == 'D':
+                    airspace.coordinates.append(Parameter(direction=value))
+                elif parameter == 'W':
+                    airspace.coordinates.append(Parameter(width=value))
+                elif parameter == 'Z':
+                    airspace.coordinates.append(Parameter(zoom=value))
+            elif field == 'DA':
+                raise Exception()
+                airspace.arc_radius = rest
+            elif field == 'DB':
+                coord1,coord2 = rest.split(',', 1)
+                airspace.coordinates.append(ArcSegment(
+                                            Coordinate.from_string(coord1),
+                                            Coordinate.from_string(coord2)))
+            elif field == 'DC':
+                airspace.coordinates.append(Circle(rest))
+            else:
+                print('Unhandled: ', line)
 
-                if airspace.name.upper().startswith(tma):
-                    airspace.airsport_names = airsport
-                    airspace.key = tma
-                    tma_airspaces[tma].append(airspace)
-                    
-                for name in airsport:
-                    if airspace.name.upper().startswith(name.upper()):
-                        airspace.key = name
-                        airsport_airspaces[name].append(airspace)
-        elif field == 'AL':
-            airspace.limit_low = rest
-        elif field == 'AH':
-            airspace.limit_high = rest
-        elif field == 'AF':
-            airspace.frequency = rest
-        elif field == 'AG':
-            airspace.controller = rest
-        elif field == 'DP':
-            coord = Coordinate.from_string(rest)
-            airspace.coordinates.append(coord)
-        elif field == 'V ':
-            airspace.center = rest
-        elif field == 'DA':
-            airspace.arc_radius = rest
-        elif field == 'DB':
-            airspace.arc = rest
-        elif field == 'DC':
-            airspace.radius = rest
-        else:
-            print('Unhandled: ', line)
-
+    # Add radio frequencies to airspaces
     r = re.compile(r'((.*)(TMA|CTA|TIA|TIZ|CTR)\s+(\d*))')
     freqs = []
     for a in airspaces:
@@ -473,7 +514,7 @@ def parse(filename):
                 name = m.group(0)
             freqs.append((f"    '{name}' : '{a.frequency}',"))
         a.add_frequency()
-        
+
     # Warn about airspaces in config file which we didn't not find in airspace file
     for freq_name in airspace_config.airspace_frequencies.keys():
         if freq_name not in found_frequencies:
@@ -537,7 +578,7 @@ def convert_aip_to_openair(data):
     """Used to convert coordinates copied directly from AIP into OpenAir format"""
     coords = parse_aip_coordinates(data)
     for c in coords:
-        print('DP ' + c.to_dms())
+        print(c.to_openair())
 
 #print(convert_aip_to_openair(test_data))
 
@@ -545,7 +586,8 @@ if __name__ == '__main__':
     #convert_aip_to_openair(test_data)
     polaris_sectors = parse_acc_sectors(SECTORS_FILENAME)
 
-    content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(FILENAME)
+    content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(
+        FILENAME, LOCAL_ADDITIONS)
     sectorize_polaris(polaris_airspaces.values(), polaris_sectors)
     
     subtract_airsport_airspaces()

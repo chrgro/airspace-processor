@@ -3,7 +3,8 @@ import re
 airsport_areas = {
     'Oslo TMA' : ['STARMOEN', 'HOKKSUND', 'EGGEMOEN', 'EINA', 'SUNNVOLLEN', 'HVITTINGFOSS'],
     'Farris TMA' : ['HVITTINGFOSS', 'GVARV', 'LUNDE', 'DRANGEDAL', 'BOE', 'BØ', 'TOKKE'],
-    'WestCoast TMA' : ['KVAM TRANSITAREA', 'GULLFJELLET'],
+    'Flesland TMA' : ['GULLFJELLET GLIDERAREA', 'KVAM TRANSITAREA'],
+    'WestCoast TMA' : ['KVAM TRANSITAREA', 'GULLFJELLET GLIDERAREA'],
     'Værnes TMA' : ['NIDAROS', 'GAULDAL', 'MERÅKER'],
     'Polaris CTA' : ['BJORLI WAVE', 'LESJA WAVE', 'DOVRE WAVE', 'OPPDAL WAVE', 'VAAGAA WAVE',
                      'RONDANE WAVE', 'RINGEBU WAVE', 'JOTUNHEIMEN WAVE', 'TYNSET'],
