@@ -3,8 +3,8 @@ import re
 airsport_areas = {
     'Oslo TMA' : ['STARMOEN', 'HOKKSUND', 'EGGEMOEN', 'EINA', 'SUNNVOLLEN', 'HVITTINGFOSS'],
     'Farris TMA' : ['HVITTINGFOSS', 'GVARV', 'LUNDE', 'DRANGEDAL', 'BOE', 'BØ', 'TOKKE'],
-    'Flesland TMA' : ['GULLFJELLET GLIDERAREA', 'KVAM TRANSITAREA'],
-    'WestCoast TMA' : ['KVAM TRANSITAREA', 'GULLFJELLET GLIDERAREA'],
+    'Flesland TMA' : ['GULLFJELLET GLIDER AREA', 'KVAM TRANSIT AREA'],
+    'WestCoast TMA' : ['KVAM TRANSIT AREA', 'GULLFJELLET GLIDER AREA'],
     'Værnes TMA' : ['NIDAROS', 'GAULDAL', 'MERÅKER'],
     'Polaris CTA' : ['BJORLI WAVE', 'LESJA WAVE', 'DOVRE WAVE', 'OPPDAL WAVE', 'VAAGAA WAVE',
                      'RONDANE WAVE', 'RINGEBU WAVE', 'JOTUNHEIMEN WAVE', 'TYNSET'],
@@ -180,6 +180,11 @@ airspace_frequencies = {
     'Ørland TMA' : '118.25',
     'Østre Æra Flyplass' : '135.30',
 }
+
+REMOVE_AIRSPACES = [
+    'EN D105 Rena',     # Replaced by our own Rena West, Mid and East
+    'Bømoen Flyplass',  # Replaced by our own Hoppfelt Bømoen
+]
 
 AIRSPACE_NAME = re.compile(r'((.*)(TMA|CTA|TIA|TIZ|CTR)\s+(\d*))')
 def lookup_frequency(name):

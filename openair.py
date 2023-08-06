@@ -440,12 +440,19 @@ def parse(*filenames):
             if field == 'AC':
                 airspace = Airspace()
                 airspace.cls = rest
-                airspaces.append(airspace)
-                content.append(airspace)
             elif not airspace:
                 continue
             elif field == 'AN':
                 airspace.name = rest
+
+                if airspace.name in airspace_config.REMOVE_AIRSPACES:
+                    # ignore this airspace
+                    airspace = None
+                    continue
+
+                # Add to our airspaces
+                airspaces.append(airspace)
+                content.append(airspace)
 
                 if airspace.name.upper().startswith('POLARIS'):
                     airspace.key = airspace.name
