@@ -1,7 +1,7 @@
 * ==========================================================================
 * OpenAir format suitable for WinPilot and SeeYou
 * ==========================================================================
-* 2023 25.April  PML  UKK  S/NLF 
+* 2023 August 7 AMG
 * ==========================================================================
 * DISCLAIMER
 * ALWAYS CHECK OFFICIAL AIRSPACE BEFORE FLYING.
@@ -18,14 +18,12 @@
 * 
 * The information in these files are based on the excellent work of 
 * Hans Cato Grytnes  Nils Barkald  Ole Bårdtvedt  Lars Rune Bjørnevik 
-* Arne Martin Güettler and Agnar Renolen.
+* Arne Martin Güettler, Per Morten Løvsland and Agnar Renolen.
 * This information collected from in AIP / ENR. Any errors or requests for
-* changes and additions should be sendt to lars.rune.bjornevik@gmail.com.
+* changes and additions should be sendt to arneh@guettler.no.
 * 
-* The Norwegian Competition commity (UKK). 
-* Per Morten Løvsland  
-* permortenl@yahoo.no
-* April 25  2023
+* Arne Martin Güettler
+* arneh@guettler.no
 * 
 * ==========================================================================
 * CONVENTIONS
@@ -42,7 +40,7 @@
 * AIRSPORT SECTORS
 * ==========================================================================
 * 
-* Within Oslo  Farris and Flesland TMA  so called 'Airsport sectors' have
+* Within Oslo  Farris and Flesland TMA as well as Polaris CTA so called 'Airsport sectors' have
 * been defined.  These are areas that can be opened and used by glider
 * pilots. The sectors are subject to special procedures regarding opening 
 * closing and use.  The following documents apply (Norwegian only):
@@ -57,12 +55,27 @@
 * --------------------------------------------------------------------------
 * WARNING
 * 
+* When not open these sectors are controlled airspace, and you need clearance to
+* enter!  The frequencies for these sectors listed in the airspace file is the
+* frequency of the responsible ATC unit.
+* 
 * ATCC may change the altitude granted in open airsport sectors at any
-* time. Beware of this when requesting air sport sectors for competitions. 
+* time. The altitude listed in this airspace is the standard altitude,
+* but ATCC may give you a different altitude.
+* Beware of this when requesting air sport sectors
 *
 * ==========================================================================
 * CHANGES
 * ==========================================================================
+* 2023 August 7 - AMG
+* - Automated process to process airspace from http://luftrom.info/
+* - Airsport sectors have been separated out from their containing TMA/CTA.  This should help ensure that
+*   you get warnings when leaving the airsport sector and further entering the TMA/CTA which has not been
+*   opened (both vertically and horizontally)
+* - Radio frequencies have been added to most controlled airspace.  Frequency is for the responsible
+*   ATCC unit.  For airsport sectors which are opened from the ground, you will have to be on the frequency
+*   of the ground station to fly there, not on the frequency listed in the airspace file.
+* 
 * 2023 April 25 - PML
 * - New Airspace file based on http://luftrom.info/
 * - New airspace file includes latest changes to airspaces (Norway --> Polaris  etc.)

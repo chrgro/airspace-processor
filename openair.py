@@ -16,6 +16,7 @@ URL = 'https://raw.githubusercontent.com/relet/pg-xc/master/openair/luftrom.fl.t
 LOCAL_ADDITIONS = 'static/local-additions.txt'
 #FILENAME="polaris.txt"
 SECTORS_FILENAME = 'static/acc-sectors.txt'
+CHANGELOG_FILENAME = 'static/changelog.txt'
 OUTPUT='Norway2023-modified.txt'
 
 PLOT_SUBTRACTIONS=False
@@ -605,6 +606,8 @@ if __name__ == '__main__':
     subtract_airsport_airspaces()
 
     output = open(OUTPUT, 'w')
+    output.write(open(CHANGELOG_FILENAME).read())
+
     empty_line = False
     for line in content:
         content = str(line).strip()
