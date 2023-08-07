@@ -75,6 +75,9 @@
 * - Radio frequencies have been added to most controlled airspace.  Frequency is for the responsible
 *   ATCC unit.  For airsport sectors which are opened from the ground, you will have to be on the frequency
 *   of the ground station to fly there, not on the frequency listed in the airspace file.
+* - Polaris has been sectorized into ATCC sectors with common frequency.  Names changed to include sector number and frequency.
+* - Updated to AIP 125, removed Gullknapp TIZ, END548 - added END263, Farris TMA 14
+* - Updated to AIP 126, updates to Flesland TMA, Ulven, Tjeldbergodden, Stureterminalen
 * 
 * 2023 April 25 - PML
 * - New Airspace file based on http://luftrom.info/
