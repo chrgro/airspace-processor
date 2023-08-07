@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import utm, copy, shapely, re, sys
+import utm, copy, shapely, re, sys, requests, time
 from shapely.geometry import Polygon,MultiPolygon,GeometryCollection,LineString
 from shapely import ops, set_precision
 import airspace_config
@@ -12,12 +12,10 @@ IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller
 PRECISION = 20.0   # Precision used in calculations in m.  If this is too small it will create
                    # almost empty "lines" when doing the area subtractions due to rounding errors
 
-LOCAL_ADDITIONS = 'local-additions.txt'
-FILENAME = 'NorwayAirspace 20230425 revA-fixed.txt'
-#FILENAME = 'luftrom-2023.fl.txt'
+URL = 'https://raw.githubusercontent.com/relet/pg-xc/master/openair/luftrom.fl.txt'
+LOCAL_ADDITIONS = 'static/local-additions.txt'
 #FILENAME="polaris.txt"
-FILENAME = 'luftrom.fl.txt'
-SECTORS_FILENAME = 'acc-sectors.txt'
+SECTORS_FILENAME = 'static/acc-sectors.txt'
 OUTPUT='Norway2023-modified.txt'
 
 PLOT_SUBTRACTIONS=False
@@ -589,12 +587,19 @@ def convert_aip_to_openair(data):
 
 #print(convert_aip_to_openair(test_data))
 
+def download_luftrom_info():
+    r = requests.get(URL, allow_redirects=True)
+    filename = 'Downloads/luftrom.fl.txt'
+    open(filename, 'wb').write(r.content)
+    return filename
+
 if __name__ == '__main__':
     #convert_aip_to_openair(test_data)
     polaris_sectors = parse_acc_sectors(SECTORS_FILENAME)
 
+    luftrom = download_luftrom_info()
     content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(
-        FILENAME, LOCAL_ADDITIONS)
+        luftrom, LOCAL_ADDITIONS)
     sectorize_polaris(polaris_airspaces.values(), polaris_sectors)
     
     subtract_airsport_airspaces()
