@@ -6,10 +6,10 @@ from shapely import ops, set_precision
 import airspace_config
 import matplotlib.pyplot as plt
 
-IGNORE_LIMIT = 0.005  # If an area airsport area intersects an a TMA with less than this
+IGNORE_LIMIT = 0.0004  # If an area airsport area intersects an a TMA with less than this
                       # ratio we will ignore it to not create too many tiny areas
-IGNORE_SIZE = 20 * 1000 * 1000  # The intersecting area also needs to be smaller than this (meters squared)
-PRECISION = 20.0   # Precision used in calculations in m.  If this is too small it will create
+IGNORE_SIZE = 0.5 * 1000 * 1000  # The intersecting area also needs to be smaller than this (meters squared)
+PRECISION = 5.0   # Precision used in calculations in m.  If this is too small it will create
                    # almost empty "lines" when doing the area subtractions due to rounding errors
 
 URL = 'https://raw.githubusercontent.com/relet/pg-xc/master/openair/luftrom.fl.txt'
@@ -196,7 +196,11 @@ class Airspace:
         # unfortunately not accurate enough so that edges for airsport areas completely
         # match the containing TMA airspace
         diff = intersection.area / self.area.area
-        if diff < IGNORE_LIMIT and intersection.area < 20.0 * 1000 * 1000: # or diff > (1.0 - IGNORE_LIMIT):
+        if diff < IGNORE_LIMIT:
+            #print(f"Not splitting {self.name} and {splitting_airspace.name} because the diff is too low: {diff}")
+            return None
+        if intersection.area < IGNORE_SIZE: # or diff > (1.0 - IGNORE_LIMIT):
+            #print(f"Not splitting {self.name} and {splitting_airspace.name} because size of new area too low {intersection.area}")
             return None
 
         # Create a new airspace object for the intersecting part of the airspace.
