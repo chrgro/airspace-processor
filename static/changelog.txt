@@ -1,7 +1,7 @@
 * ==========================================================================
 * OpenAir format suitable for WinPilot and SeeYou
 * ==========================================================================
-* 2023 August 7 AMG
+* 2023 August 10 AMG
 * ==========================================================================
 * DISCLAIMER
 * ALWAYS CHECK OFFICIAL AIRSPACE BEFORE FLYING.
@@ -67,6 +67,9 @@
 * ==========================================================================
 * CHANGES
 * ==========================================================================
+* 2023 August 10 - CVG
+* - Fixed missing small wavesectors around Bjorli and Oppdal
+
 * 2023 August 7 - AMG
 * - Automated process to process airspace from http://luftrom.info/
 * - Airsport sectors have been separated out from their containing TMA/CTA.  This should help ensure that
