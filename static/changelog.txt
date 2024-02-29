@@ -67,9 +67,12 @@
 * ==========================================================================
 * CHANGES
 * ==========================================================================
+* 2024 Feb 29 - AMG
+* - Changed the wave sectors from local additions to official danger areas from AIP
+*
 * 2023 August 10 - CVG
 * - Fixed missing small wavesectors around Bjorli and Oppdal
-
+*
 * 2023 August 7 - AMG
 * - Automated process to process airspace from http://luftrom.info/
 * - Airsport sectors have been separated out from their containing TMA/CTA.  This should help ensure that
