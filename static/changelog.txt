@@ -69,6 +69,9 @@
 * ==========================================================================
 * 2024 Feb 29 - AMG
 * - Changed the wave sectors from local additions to official danger areas from AIP
+* - updated to AIP 127, named R202 to Kollsnes Prosessanlegg
+* - updated to AIP 128: updated geometries for Gauldal, Østre Ara. New: Loen, Arendal sentrum
+* - removing all special agreements until valid source documents can be found
 *
 * 2023 August 10 - CVG
 * - Fixed missing small wavesectors around Bjorli and Oppdal
