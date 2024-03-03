@@ -367,12 +367,12 @@ class Airspace:
                 lines.append('* ' + self.comment)
             lines.append('AC ' + self.cls)
             lines.append('AN ' + self.name)
-            if self.frequency:
-                lines.append('AF ' + self.frequency)
             if self.controller:
                 lines.append('AG ' + self.controller)
             lines.append('AL ' + self.limit_low)
             lines.append('AH ' + self.limit_high)
+            if self.frequency:
+                lines.append('AF ' + self.frequency)
 
             for c in coords:
                 lines.append(c.to_openair())
