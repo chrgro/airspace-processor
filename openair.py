@@ -143,23 +143,19 @@ class Airspace:
 
     def add_frequency(self):
         # Look up frequency in config file
-        frequency,airspace_name = airspace_config.lookup_frequency(self.name)
+        frequency,controller,airspace_name = airspace_config.lookup_frequency(self.name)
 
         # To check that all frequencies in config file are used
         # (could catch error where an airspace has changed name from config)
         if frequency:
             found_frequencies.add(airspace_name)
 
-        if not self.frequency:
-            # If freqency is written as last part of airspace name, them prefer that
-            frequency_match = self.FREQUENCY_RE.match(self.name)
-            if frequency_match:
-                self.frequency = frequency_match.group(2)
-            elif frequency:
+            if not self.frequency:
                 # use looked up frequency from config file
                 self.frequency = frequency
                 # Add frequency to end of name of airspace
                 self.name += f" {self.frequency}"
+                self.controller = controller
                                    
     def process_area(self, *airspaces):
         """Creates shapely areas for those airspaces we need to work on.
@@ -213,6 +209,7 @@ class Airspace:
         new_containing.area = intersection
         new_containing.split_areas = []
         new_containing.frequency = splitting_airspace.frequency
+        new_containing.controller = splitting_airspace.controller
 
         # If the splitting airsport area does is not entirely lie within self's airspace,
         # then we need to split the airsport area too
@@ -367,12 +364,12 @@ class Airspace:
                 lines.append('* ' + self.comment)
             lines.append('AC ' + self.cls)
             lines.append('AN ' + self.name)
-            if self.controller:
-                lines.append('AG ' + self.controller)
             lines.append('AL ' + self.limit_low)
             lines.append('AH ' + self.limit_high)
             if self.frequency:
                 lines.append('AF ' + self.frequency)
+                if self.controller:
+                    lines.append('AG ' + self.controller)
 
             for c in coords:
                 lines.append(c.to_openair())
@@ -528,7 +525,6 @@ def parse(*filenames):
     # Warn about airspaces in config file which we didn't not find in airspace file
     for freq_name in airspace_config.airspace_frequencies.keys():
         if freq_name not in found_frequencies:
-            continue
             print(f'Warning: Airspace from frequencies config file not found in airspace file: {freq_name}')
 
     return content, tma_airspaces, polaris_airspaces, airsport_airspaces

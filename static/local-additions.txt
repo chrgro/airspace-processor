@@ -30,7 +30,7 @@ DB 61:14:33 N 011:18:12 E, 61:07:07 N 011:21:49 E
 *
 *
 AC Q
-AN Hoppfelt Bømoen 123.500
+AN Hoppfelt Bømoen
 AL GND
 AH FL 115
 DP 60:38:12 N  006:27:36 E
