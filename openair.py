@@ -20,6 +20,7 @@ CHANGELOG_FILENAME = 'static/changelog.txt'
 OUTPUT='Norway2023-modified.txt'
 
 PLOT_SUBTRACTIONS=False
+USE_EXTENDED_OPENAIR=False
 
 def to_dms(dd):
     mnt,sec = divmod(dd*3600, 60)
@@ -126,7 +127,9 @@ class Airspace:
         # Fields from OpenAir format
         self.comment = None
         self.cls = None
+        self.type = None
         self.name = None
+        self.identifier = None
         self.key = None
         self.limit_low = None
         self.limit_high = None
@@ -363,7 +366,11 @@ class Airspace:
             if self.comment:
                 lines.append('* ' + self.comment)
             lines.append('AC ' + self.cls)
+            if USE_EXTENDED_OPENAIR:
+                lines.append('AY ' + self.type)
             lines.append('AN ' + self.name)
+            if USE_EXTENDED_OPENAIR:
+                lines.append('AI ' + self.identifier)
             lines.append('AL ' + self.limit_low)
             lines.append('AH ' + self.limit_high)
             if self.frequency:
@@ -421,6 +428,8 @@ def parse(*filenames):
     tma_airspaces = {}         # Each TMA which has aerial sport areas
     airsport_airspaces = {}    # Link to TMA airspace from each aerial sport areas
 
+    numbered_airspace_re = re.compile(r'(.*(TMA|TIA|CTA)) \d+')
+
     # Prepare airspace config first
     for tma,areas in airspace_config.airsport_areas.items():
         tma_airspaces[tma.upper()] = []
@@ -428,7 +437,6 @@ def parse(*filenames):
             airsport_airspaces[a] = []
     
     for filename in filenames:
-    #    for line in open(filename, encoding='iso8859-1'):
         for line in open(filename, encoding='utf-8'):        
             line = line.strip()
             if len(line) < 2 or line.startswith('*'):
@@ -439,9 +447,17 @@ def parse(*filenames):
 
             if field == 'AC':
                 airspace = Airspace()
-                airspace.cls = rest
+                cls = rest
+                if USE_EXTENDED_OPENAIR:
+                    # In extended OpenAir class should purely be ICAO class, so
+                    # change to class G what is not A,B,C,D,E (concerns warning areas, restrictions areas)
+                    if cls not in 'ABCDEG':
+                        cls = 'G'
+                airspace.cls = cls
             elif not airspace:
                 continue
+            elif field == 'AY':
+                airspace.type = rest
             elif field == 'AN':
                 airspace.name = rest
 
@@ -454,9 +470,36 @@ def parse(*filenames):
                 airspaces.append(airspace)
                 content.append(airspace)
 
+                if not airspace.type and USE_EXTENDED_OPENAIR:
+                    # Figure out type from name
+                    if airspace.name.startswith('EN R'):
+                        airspace.type = 'R'
+                    elif airspace.name.startswith('EN D') or airspace.name.startswith('END'):
+                        airspace.type = 'Q'
+                    elif 'CTA' in airspace.name:
+                        airspace.type = 'CTA'
+                    elif 'CTR' in airspace.name:
+                        airspace.type = 'CTR'
+                    elif 'TMA' in airspace.name:
+                        airspace.type = 'TMA'
+                    elif 'TIA' in airspace.name or 'TIZ' in airspace.name:
+                        airspace.type = 'RMZ'
+                    elif airspace.cls == 'G':
+                        airspace.type = 'Q'
+                    else:
+                        print(f'Unable to find airspace type for {airspace.name}')
+                
                 if airspace.name.upper().startswith('POLARIS'):
                     airspace.key = airspace.name
                     polaris_airspaces[airspace.name] = airspace
+
+                # Create an ID from the name
+                m = numbered_airspace_re.match(airspace.name) 
+                if m:
+                    # Drop the number
+                    airspace.identifier = m.group(1)
+                else:
+                    airspace.identifier = airspace.name
 
                 # Check if this TMA has any airsport areas
                 for tma,airsport in airspace_config.airsport_areas.items():
@@ -542,6 +585,7 @@ def parse_acc_sectors(filename):
             a = Airspace()
             a.name = f'Polaris S{match.group(1)}'
             a.key = a.name
+            a.identifier = a.name
             spaces.append(a)
         elif line.strip():  # ignore blank lines
             coord = Coordinate.from_string(line)
