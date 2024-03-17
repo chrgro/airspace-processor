@@ -20,7 +20,7 @@ CHANGELOG_FILENAME = 'static/changelog.txt'
 OUTPUT='Norway2023-modified.txt'
 
 PLOT_SUBTRACTIONS=False
-USE_EXTENDED_OPENAIR=False
+USE_EXTENDED_OPENAIR=True
 
 def to_dms(dd):
     mnt,sec = divmod(dd*3600, 60)
@@ -473,9 +473,9 @@ def parse(*filenames):
                 if not airspace.type and USE_EXTENDED_OPENAIR:
                     # Figure out type from name
                     if airspace.name.startswith('EN R'):
-                        airspace.type = 'R'
+                        airspace.type = 'RESTRICTED'
                     elif airspace.name.startswith('EN D') or airspace.name.startswith('END'):
-                        airspace.type = 'Q'
+                        airspace.type = 'DANGER'
                     elif 'CTA' in airspace.name:
                         airspace.type = 'CTA'
                     elif 'CTR' in airspace.name:
@@ -485,7 +485,7 @@ def parse(*filenames):
                     elif 'TIA' in airspace.name or 'TIZ' in airspace.name:
                         airspace.type = 'RMZ'
                     elif airspace.cls == 'G':
-                        airspace.type = 'Q'
+                        airspace.type = 'DANGER'
                     else:
                         print(f'Unable to find airspace type for {airspace.name}')
                 
