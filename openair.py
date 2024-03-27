@@ -14,7 +14,7 @@ PRECISION = 5.0   # Precision used in calculations in m.  If this is too small i
 
 URL = 'https://raw.githubusercontent.com/relet/pg-xc/master/openair/luftrom.fl.txt'
 LOCAL_ADDITIONS = 'static/local-additions.txt'
-#FILENAME="polaris.txt"
+#FILENAME="test.txt"
 SECTORS_FILENAME = 'static/acc-sectors.txt'
 CHANGELOG_FILENAME = 'static/changelog.txt'
 OUTPUT='Norway2024'
@@ -221,7 +221,6 @@ class Airspace:
         new_airsport.name = splitting_airspace.name
         new_airsport.comment = f'Part of {splitting_airspace.name} which lies inside {self.name} {self.limit_low}'
         new_airsport.area = intersection
-        new_airsport.limit_low = self.limit_low
         new_airsport.containing_tma = None  # Assumes that the same containing sector lies over the entire airsport area
         new_airsport.split_areas = []
         splitting_airspace.split_areas.append(new_airsport)
@@ -319,7 +318,7 @@ class Airspace:
 
 
             # Set lower limit of airsport area to be lower limit of TMA, not ground
-            self.limit_low = self.containing_tma.limit_low
+#            self.limit_low = self.containing_tma.limit_low
         else:
             overlying_tma = None
 
@@ -599,7 +598,56 @@ def parse_acc_sectors(filename):
             
     return spaces
 
+def fix_airsport_overlap():
+    """Starmoen G and H overlap, make a new area for the overlapping area.
+    To complicate matters the altitude limits are different for G and H also,
+    so make a separate area for the part which is higher in G.
+    
+    This is quite hacky, and special case to handle this one area."""
+
+    # First find all the areas we're going to be working on
+    for a in airsport_airspaces['STARMOEN']:
+        if a.identifier == 'EN D141 Starmoen G2 Elverum':
+            g = a
+        elif a.identifier == 'EN D142 Starmoen H':
+            h = a
+
+    for a in tma_airspaces['OSLO TMA']:
+        if a.name.startswith('Oslo TMA 3'):
+            tma = a
+
+    # Make sure airspace has not changed here
+    assert g and h and tma, 'Unable to find Starmoen G, H and Oslo TMA 3'
+    assert tma.area.intersection(g.area).area > 0.0, 'Oslo TMA 3 does not contain G'
+
+    g.subtract(h)  # Get part of H intersecting G
+    g_and_h = h.split_areas[0]
+
+    # Set up a new area for the intersecting part of G and H
+    g_and_h.comment = 'Intersecting part of Starmoen G2 and H'
+    g_and_h.name = g_and_h.name.replace('Starmoen H', 'Starmoen G2 and H')
+    g_and_h.identifier = g_and_h.name
+    g_and_h.cls = tma.cls
+
+    # Add the part where G goes higher than H
+    g_above_h = copy.deepcopy(g)
+    g_above_h.area = g_and_h.area
+    g_above_h.limit_low = g_and_h.limit_high
+    g_above_h.limit_high = g.limit_high
+    g_above_h.containing_tma = tma
+    g_above_h.cls = tma.cls
+    g.split_areas.append(g_above_h)
+    
+    # This will be used to subtract from Oslo TMA this area
+    # Use the higher part of area, so that TMA will start above it
+    airsport_airspaces['STARMOEN'].append(g_above_h)
+
+    # Remove overlapping part from H too
+    h.area = h.area.difference(g_and_h.area)
+
 def subtract_airsport_airspaces():
+    fix_airsport_overlap()
+
     # Go through all TMAs with airsport areas
     for tma in tma_airspaces.values():
         # Go through each sub area in TMA
@@ -611,6 +659,7 @@ def subtract_airsport_airspaces():
                 for area in airsports:
                     area.cls = airspace.cls
                     airspace.subtract(area)
+
 
 
 def sectorize_polaris(areas, sectors):
@@ -651,10 +700,11 @@ if __name__ == '__main__':
     
     subtract_airsport_airspaces()
 
-    for extended in False,True:
+    for extended in (False,True):
         USE_EXTENDED_OPENAIR = extended
         if USE_EXTENDED_OPENAIR:
             filename = OUTPUT + '-extended.txt'
+            # SeeYou, which this format is intended for, uses Latin-1
             output = open(filename, 'w', encoding='latin-1')
         else:
             filename = OUTPUT + '.txt'
