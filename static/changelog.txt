@@ -67,6 +67,14 @@
 * ==========================================================================
 * CHANGES
 * ==========================================================================
+* 2024 Mar 21 - AMG
+* Updated to new AIP with several changes to airsport areas:
+* - New areas: Tinnsjø, Notodden Vest
+* - Gone: Gvarv
+* - Starmoen G split into two G1 and G2
+* - Starmoen B changed name to B1
+* - Type changed to danger areas
+*
 * 2024 Feb 29 - AMG
 * - Changed the wave sectors from local additions to official danger areas from AIP
 * - updated to AIP 127, named R202 to Kollsnes Prosessanlegg

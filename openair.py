@@ -17,10 +17,10 @@ LOCAL_ADDITIONS = 'static/local-additions.txt'
 #FILENAME="polaris.txt"
 SECTORS_FILENAME = 'static/acc-sectors.txt'
 CHANGELOG_FILENAME = 'static/changelog.txt'
-OUTPUT='Norway2023-modified.txt'
+OUTPUT='Norway2024.txt'
 
 PLOT_SUBTRACTIONS=False
-USE_EXTENDED_OPENAIR=True
+USE_EXTENDED_OPENAIR=False
 
 def to_dms(dd):
     mnt,sec = divmod(dd*3600, 60)
@@ -157,7 +157,7 @@ class Airspace:
                 # use looked up frequency from config file
                 self.frequency = frequency
                 # Add frequency to end of name of airspace
-                self.name += f" {self.frequency}"
+                self.name = f"{airspace_name} {self.frequency}"
                 self.controller = controller
                                    
     def process_area(self, *airspaces):
@@ -429,6 +429,7 @@ def parse(*filenames):
     airsport_airspaces = {}    # Link to TMA airspace from each aerial sport areas
 
     numbered_airspace_re = re.compile(r'(.*(TMA|TIA|CTA)) \d+')
+    DANGER_AREA_PREFIX = re.compile(r'EN D\d\d\d ')
 
     # Prepare airspace config first
     for tma,areas in airspace_config.airsport_areas.items():
@@ -509,11 +510,14 @@ def parse(*filenames):
                         airspace.airsport_names = airsport
                         airspace.key = tma
                         tma_airspaces[tma].append(airspace)
-                        
+                    
                     for name in airsport:
-                        if airspace.name.upper().startswith(name.upper()):
-                            airspace.key = name
-                            airsport_airspaces[name].append(airspace)
+                        # Remove the EN DXXX prefix from airsport areas
+                        if DANGER_AREA_PREFIX.match(airspace.name) and\
+                            airspace.name[8:].upper().startswith(name.upper()):
+                                airspace.name = airspace.name[8:]
+                                airspace.key = name
+                                airsport_airspaces[name].append(airspace)
             elif field == 'AL':
                 airspace.limit_low = rest
             elif field == 'AH':
@@ -554,15 +558,6 @@ def parse(*filenames):
     freqs = []
     for a in airspaces:
         a.process_area(airsport_airspaces, tma_airspaces, polaris_airspaces)
-
-        if False and a.frequency:
-            name = a.name
-            if m := a.FREQUENCY_RE.match(name):
-                name = m.group(1).strip()
-            
-            if m := r.match(name):
-                name = m.group(0)
-            freqs.append((f"    '{name}' : '{a.frequency}',"))
         a.add_frequency()
 
     # Warn about airspaces in config file which we didn't not find in airspace file

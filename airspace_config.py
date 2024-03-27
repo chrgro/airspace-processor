@@ -2,19 +2,20 @@ import re
 
 airsport_areas = {
     'Oslo TMA' : ['STARMOEN', 'HOKKSUND', 'EGGEMOEN', 'EINA', 'SUNNVOLLEN', 'HVITTINGFOSS'],
-    'Farris TMA' : ['HVITTINGFOSS', 'GVARV', 'LUNDE', 'DRANGEDAL', 'BOE', 'BØ', 'TOKKE'],
+    'Farris TMA' : ['HVITTINGFOSS', 'GVARV', 'LUNDE', 'DRANGEDAL', 'BOE', 'BØ', 
+                    'TINNSJØ', 'TOKKE', 'NOTODDEN VEST'],
     'Flesland TMA' : ['GULLFJELLET GLIDER AREA', 'KVAM TRANSIT AREA'],
     'WestCoast TMA' : ['KVAM TRANSIT AREA', 'GULLFJELLET GLIDER AREA'],
     'Værnes TMA' : ['MERÅKER'],
-    'Polaris CTA' : ['EN D360 Bjorli', 'EN D359 Lesja', 'EN D358 Dovre', 'EN D357 Oppdal',
-                     'EN D163 Vågå', 'EN D162 Rondane', 'EN D161 Ringebu', 'EN D166 Jotunheimen'
+    'Polaris CTA' : ['Bjorli', 'Lesja', 'Dovre', 'Oppdal',
+                     'Vågå', 'Rondane', 'Ringebu', 'Jotunheimen'
                      ],
     }
 
 airspace_frequencies = {
     'Airwork A' : ('118.475', 'Oslo Approach'),
     'Airwork B' : ('118.475', 'Oslo Approach'),
-    'Airwork C2' : ('118.475', 'Oslo Approach'),
+    'Airwork C' : ('118.475', 'Oslo Approach'),
     'Airwork E' : ('118.475', 'Oslo Approach'),
     'Airwork F' : ('118.475', 'Oslo Approach'),
     'Alta TMA' : ('120.400', 'Alta Approach'),
@@ -34,18 +35,18 @@ airspace_frequencies = {
     'Båtsfjord TIZ' : ('123.400', 'Båtsfjord Information'),
     'Bø' : ('124.350', 'Farris Approach'),
     'Drangedal' : ('124.350', 'Farris Approach'),
-    'EN D161 Ringebu' : ('124.775', 'Polaris Control'),
-    'EN D162 Rondane' : ('124.775', 'Polaris Control'),
-    'EN D163 Vågå' : ('124.775', 'Polaris Control'),
-    'EN D166 Jotunheimen' : ('124.775', 'Polaris Control'),
-    'EN D168 Østre Æra' : ('121.350', 'Østre Æra Traffic'),
-    'EN D357 Oppdal' : ('125.700', 'Polaris Control'),
-    'EN D358 Dovre' : ('125.700', 'Polaris Control'),
-    'EN D359 Lesja' : ('125.700', 'Polaris Control'),
-    'EN D360 Bjorli' : ('125.700', 'Polaris Control'),
+    'Ringebu' : ('124.775', 'Polaris Control'),
+    'Rondane' : ('124.775', 'Polaris Control'),
+    'Vågå' : ('124.775', 'Polaris Control'),
+    'Jotunheimen' : ('124.775', 'Polaris Control'),
+    'Østre Æra' : ('121.350', 'Østre Æra Traffic'),
+    'Oppdal' : ('125.700', 'Polaris Control'),
+    'Dovre' : ('125.700', 'Polaris Control'),
+    'Lesja' : ('125.700', 'Polaris Control'),
+    'Bjorli' : ('125.700', 'Polaris Control'),
     'Eggemoen A' : ('120.450', 'Oslo Approach'),
     'Eggemoen B' : ('120.450', 'Oslo Approach'),
-    'Eina' : ('120.450', 'Oslo Approach'),
+    'Eina A' : ('120.450', 'Oslo Approach'),
     'Etne' : ('124.775', 'Polaris Control'),
     'Evenes CTR' : ('119.900', 'Evenes Tower'),
     'Evenes TMA' : ('118.000', 'Evenes Approach'),
@@ -66,7 +67,7 @@ airspace_frequencies = {
     'Florø TIZ' : ('119.200', 'Florø Information'),
     'Gullfjellet Glider Area' : ('125.000', 'Flesland Approach'),
     'Gardermoen CTR' : ('120.100', 'Oslo Tower'),
-    'Gvarv' : ('124.350', 'Farris Approach'),
+#    'Gvarv' : ('124.350', 'Farris Approach'),
     'Hamar Flyplass' : ('130.275', 'Hamar Traffic'),
     'Hammerfest TIZ' : ('121.000', 'Hammerfest Information'),
     'Hammerfest TMA' : ('126.700', 'Hammerfest Approach'),
@@ -105,6 +106,7 @@ airspace_frequencies = {
     'Namsos TIA' : ('118.550', 'Polaris Control'),
     'Namsos TIZ' : ('119.900', 'Namsos Information'),
     'Notodden TIZ' : ('118.800', 'Notodden Information'),
+    'Notodden Vest' : ('124.350', 'Farris Approach'),
     'Oslo TMA' : ('118.475', 'Oslo Approach'),
     'Oslo TMA 2' : ('120.450', 'Oslo Approach'),
     'Oslo TMA 3' : ('118.475', 'Oslo Approach'),
@@ -148,17 +150,19 @@ airspace_frequencies = {
     'Sola CTR' : ('118.350', 'Sola Tower'),
     'Sola TMA' : ('119.600', 'Sola Approach'),
     'Starmoen A' : ('118.475', 'Oslo Approach'),
-    'Starmoen B' : ('118.475', 'Oslo Approach'),
+    'Starmoen B1' : ('118.475', 'Oslo Approach'),
     'Starmoen C' : ('118.475', 'Oslo Approach'),
     'Starmoen D' : ('118.475', 'Oslo Approach'),
     'Starmoen F' : ('120.450', 'Oslo Approach'),
-    'Starmoen G' : ('118.475', 'Oslo Approach'),
+    'Starmoen G1 Hamar' : ('118.475', 'Oslo Approach'),
+    'Starmoen G2 Elverum' : ('118.475', 'Oslo Approach'),
     'Starmoen H' : ('118.475', 'Oslo Approach'),
     'Stokka TIZ' : ('120.300', 'Stokka Information'),
     'Sunnvollen' : ('120.450', 'Oslo Approach'),
     'Sørkjosen TIA' : ('126.700', 'Polaris Control'),
     'Sørkjosen TIZ' : ('119.600', 'Sørkjosen Information'),
     'Sørstokken TIZ' : ('120.200', 'Sørstokken Information'),
+    'Tinnsjø' : ('124.350', 'Farris Approach'),
     'Tokke' : ('124.350', 'Farris Approach'),
     'Torp CTR' : ('118.650', 'Torp Tower'),
     'Tromsø CTR' : ('118.300', 'Tromsø Tower'),
@@ -181,18 +185,25 @@ REMOVE_AIRSPACES = [
     'Bømoen Flyplass',  # Replaced by our own Hoppfelt Bømoen
 ]
 
+DANGER_PREFIX = re.compile(r'EN D\d\d\d ')
 AIRSPACE_NAME = re.compile(r'((.*)(TMA|CTA|TIA|TIZ|CTR)\s+(\d*))')
 def lookup_frequency(name):
     # Look up frequency in our table, from most specific to least
     if name in airspace_frequencies:   # We have frequency for exact airspace name
         return *airspace_frequencies[name],name
-    else:
-        # For e.g. Farris TMA 3 West try in order: "Farris TMA 3", then "Farris TMA"
-        if match := AIRSPACE_NAME.match(name):
-            if match.group(1) in airspace_frequencies:
-                return *airspace_frequencies[name],match.group(1)
-            else:
-                name = match.group(2) + match.group(3)
-                return *airspace_frequencies.get(name, (None,None)),name
+    
+    if DANGER_PREFIX.match(name):
+        # Try without the EN DXXX prefix
+        name = name[8:]
+        if name in airspace_frequencies:
+            return *airspace_frequencies[name],name
+
+    # For e.g. Farris TMA 3 West try in order: "Farris TMA 3", then "Farris TMA"
+    if match := AIRSPACE_NAME.match(name):
+        if match.group(1) in airspace_frequencies:
+            return *airspace_frequencies[name],match.group(1)
+        else:
+            name = match.group(2) + match.group(3)
+            return *airspace_frequencies.get(name, (None,None)),name
 
     return None,None,None
