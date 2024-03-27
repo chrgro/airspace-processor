@@ -151,6 +151,7 @@ airspace_frequencies = {
     'Sola TMA' : ('119.600', 'Sola Approach'),
     'Starmoen A' : ('118.475', 'Oslo Approach'),
     'Starmoen B1' : ('118.475', 'Oslo Approach'),
+    'Starmoen B2' : ('118.475', 'Oslo Approach'),
     'Starmoen C' : ('118.475', 'Oslo Approach'),
     'Starmoen D' : ('118.475', 'Oslo Approach'),
     'Starmoen F' : ('120.450', 'Oslo Approach'),
@@ -182,7 +183,8 @@ airspace_frequencies = {
 
 REMOVE_AIRSPACES = [
     'EN D105 Rena',     # Replaced by our own Rena West, Mid and East
-    'Bømoen Flyplass',  # Replaced by our own Hoppfelt Bømoen
+    'Bømoen Flyplass',  # Replaced by our own Hoppfelt Bømoen,
+    'EN D201 Ulven'     # Already have a danger area for 'Ulven'
 ]
 
 DANGER_PREFIX = re.compile(r'EN D\d\d\d ')

@@ -17,10 +17,11 @@ LOCAL_ADDITIONS = 'static/local-additions.txt'
 #FILENAME="polaris.txt"
 SECTORS_FILENAME = 'static/acc-sectors.txt'
 CHANGELOG_FILENAME = 'static/changelog.txt'
-OUTPUT='Norway2024.txt'
+OUTPUT='Norway2024'
 
 PLOT_SUBTRACTIONS=False
 USE_EXTENDED_OPENAIR=False
+
 
 def to_dms(dd):
     mnt,sec = divmod(dd*3600, 60)
@@ -365,7 +366,13 @@ class Airspace:
         for coords in coordinates:
             if self.comment:
                 lines.append('* ' + self.comment)
-            lines.append('AC ' + self.cls)
+            cls = self.cls
+            if USE_EXTENDED_OPENAIR:
+                # In extended OpenAir, class should purely be ICAO class, so
+                # change to class G what is not A,B,C,D,E (concerns warning areas, restrictions areas)
+                if cls not in 'ABCDE':
+                    cls = 'G'
+            lines.append('AC ' + cls)
             if USE_EXTENDED_OPENAIR:
                 lines.append('AY ' + self.type)
             lines.append('AN ' + self.name)
@@ -449,7 +456,7 @@ def parse(*filenames):
             if field == 'AC':
                 airspace = Airspace()
                 cls = rest
-                if USE_EXTENDED_OPENAIR:
+                if False and USE_EXTENDED_OPENAIR:
                     # In extended OpenAir class should purely be ICAO class, so
                     # change to class G what is not A,B,C,D,E (concerns warning areas, restrictions areas)
                     if cls not in 'ABCDEG':
@@ -471,7 +478,7 @@ def parse(*filenames):
                 airspaces.append(airspace)
                 content.append(airspace)
 
-                if not airspace.type and USE_EXTENDED_OPENAIR:
+                if not airspace.type:
                     # Figure out type from name
                     if airspace.name.startswith('EN R'):
                         airspace.type = 'RESTRICTED'
@@ -485,7 +492,7 @@ def parse(*filenames):
                         airspace.type = 'TMA'
                     elif 'TIA' in airspace.name or 'TIZ' in airspace.name:
                         airspace.type = 'RMZ'
-                    elif airspace.cls == 'G':
+                    elif airspace.cls in ('G', 'Q', 'W'):
                         airspace.type = 'DANGER'
                     else:
                         print(f'Unable to find airspace type for {airspace.name}')
@@ -638,26 +645,34 @@ if __name__ == '__main__':
     polaris_sectors = parse_acc_sectors(SECTORS_FILENAME)
 
     luftrom = download_luftrom_info()
-    content, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(
+    file_input, tma_airspaces, polaris_airspaces, airsport_airspaces = parse(
         luftrom, LOCAL_ADDITIONS)
     sectorize_polaris(polaris_airspaces.values(), polaris_sectors)
     
     subtract_airsport_airspaces()
 
-    output = open(OUTPUT, 'w')
-    output.write(open(CHANGELOG_FILENAME).read())
-
-    empty_line = False
-    for line in content:
-        content = str(line).strip()
-        if not content:
-            # Skip multiple empty lines
-            if empty_line:
-                continue
-            empty_line = True
+    for extended in False,True:
+        USE_EXTENDED_OPENAIR = extended
+        if USE_EXTENDED_OPENAIR:
+            filename = OUTPUT + '-extended.txt'
+            output = open(filename, 'w', encoding='latin-1')
         else:
-            empty_line = False
+            filename = OUTPUT + '.txt'
+            output = open(filename, 'w', encoding='utf-8')
 
-        output.write(content + '\n')
-    output.close()
-    print('Result written to', OUTPUT)
+        output.write(open(CHANGELOG_FILENAME).read())
+
+        empty_line = False
+        for line in file_input:
+            content = str(line).strip()
+            if not content:
+                # Skip multiple empty lines
+                if empty_line:
+                    continue
+                empty_line = True
+            else:
+                empty_line = False
+
+            output.write(content + '\n')
+        output.close()
+        print('Result written to', filename)
