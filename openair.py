@@ -351,6 +351,8 @@ class Airspace:
                 for a in self.area.geoms:
                     if not isinstance(a, Polygon):
                         continue
+                    if a.area < IGNORE_SIZE:
+                        continue
                     if a.interiors:
                         print('Has holes:', self.name)
         
