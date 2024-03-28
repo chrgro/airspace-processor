@@ -72,8 +72,10 @@
 * - New areas: Tinnsjø, Notodden Vest
 * - Gone: Gvarv
 * - Starmoen G split into two G1 and G2
-* - Starmoen B changed name to B1
+* - Starmoen B split into B1 and B2
+* - Handle the overlapping Starmoen G and H better
 * - Type changed to danger areas
+* - Generate extended OpenAir format for SeeYou so it can get more information
 *
 * 2024 Feb 29 - AMG
 * - Changed the wave sectors from local additions to official danger areas from AIP
