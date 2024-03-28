@@ -163,6 +163,7 @@ airspace_frequencies = {
     'Sørkjosen TIA' : ('126.700', 'Polaris Control'),
     'Sørkjosen TIZ' : ('119.600', 'Sørkjosen Information'),
     'Sørstokken TIZ' : ('120.200', 'Sørstokken Information'),
+    'Sälen TMA' : ('124.460', 'Sälen Tower'),
     'Tinnsjø' : ('124.350', 'Farris Approach'),
     'Tokke' : ('124.350', 'Farris Approach'),
     'Torp CTR' : ('118.650', 'Torp Tower'),
