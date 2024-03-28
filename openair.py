@@ -137,6 +137,8 @@ class Airspace:
         self.frequency = None
         self.controller = None
         self.coordinates = []
+        self.dont_override_lower_limit = False  # When handling airsport areas we will usually set lower limit
+                                                # to limit of controlled airspace. This disables that
 
         # Other fields
         self.airsport_names = []  # Airsport areas which are part of this TMA
@@ -221,6 +223,8 @@ class Airspace:
         new_airsport.name = splitting_airspace.name
         new_airsport.comment = f'Part of {splitting_airspace.name} which lies inside {self.name} {self.limit_low}'
         new_airsport.area = intersection
+        if not new_airsport.dont_override_lower_limit:
+            new_airsport.limit_low = self.limit_low
         new_airsport.containing_tma = None  # Assumes that the same containing sector lies over the entire airsport area
         new_airsport.split_areas = []
         splitting_airspace.split_areas.append(new_airsport)
@@ -633,6 +637,7 @@ def fix_airsport_overlap():
     g_above_h = copy.deepcopy(g)
     g_above_h.area = g_and_h.area
     g_above_h.limit_low = g_and_h.limit_high
+    g_above_h.dont_override_lower_limit = True
     g_above_h.limit_high = g.limit_high
     g_above_h.containing_tma = tma
     g_above_h.cls = tma.cls
