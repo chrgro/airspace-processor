@@ -17,7 +17,7 @@ LOCAL_ADDITIONS = 'static/local-additions.txt'
 #FILENAME="test.txt"
 SECTORS_FILENAME = 'static/acc-sectors.txt'
 CHANGELOG_FILENAME = 'static/changelog.txt'
-OUTPUT='Norway2024'
+OUTPUT='Norway2024v2'
 
 PLOT_SUBTRACTIONS=False
 USE_EXTENDED_OPENAIR=False
@@ -527,7 +527,7 @@ def parse(*filenames):
                         # Remove the EN DXXX prefix from airsport areas
                         if DANGER_AREA_PREFIX.match(airspace.name) and\
                             airspace.name[8:].upper().startswith(name.upper()):
-                                airspace.name = airspace.name[8:]
+                                airspace.name = airspace.name[3:]
                                 airspace.key = name
                                 airsport_airspaces[name].append(airspace)
             elif field == 'AL':
@@ -631,7 +631,7 @@ def fix_airsport_overlap():
 
     # Set up a new area for the intersecting part of G and H
     g_and_h.comment = 'Intersecting part of Starmoen G2 and H'
-    g_and_h.name = g_and_h.name.replace('Starmoen H', 'Starmoen G2 and H')
+    g_and_h.name = g_and_h.name.replace('D142 Starmoen H', 'D141/142 Starmoen G2/H')
     g_and_h.identifier = g_and_h.name
     g_and_h.cls = tma.cls
 
