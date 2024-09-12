@@ -1,0 +1,300 @@
+* ==========================================================================
+* OpenAir format suitable for WinPilot and SeeYou
+* ==========================================================================
+* 2024 June 17 AMG
+* ==========================================================================
+* DISCLAIMER
+* ALWAYS CHECK OFFICIAL AIRSPACE BEFORE FLYING.
+* USE AT OWN RISK.
+* ALL ELEVATIONS IN FEET.
+* Information is not intended for flight navigation and UKK and SNLF is not 
+* liable for any errors in these files.
+* ==========================================================================
+* Information
+* ==========================================================================
+* This package contains air space files covering Southern Norway in OpenAir
+* format suitable for gliding and gliding software  such as WinPilot and
+* SeeYou. 
+* 
+* The information in these files are based on the excellent work of 
+* Hans Cato Grytnes  Nils Barkald  Ole Bårdtvedt  Lars Rune Bjørnevik 
+* Arne Martin Güettler, Per Morten Løvsland and Agnar Renolen.
+* This information collected from in AIP / ENR. Any errors or requests for
+* changes and additions should be sendt to arneh@guettler.no.
+* 
+* Arne Martin Güettler
+* arneh@guettler.no
+* 
+* ==========================================================================
+* CONVENTIONS
+* ==========================================================================
+* 
+* - Lower elevations are given in feet as 'ft'
+* - Upper elevation are given as flight levels 'FL'
+* - The surface elevation is given as 'GND'
+* - Traffic Information Zones (TIZ) and Trafic Information Aereas (TIA) are
+*   defined as restricted areas (R) though they are formally class G
+*   airspace.
+* 
+* ==========================================================================
+* AIRSPORT SECTORS
+* ==========================================================================
+* 
+* Within Oslo  Farris and Flesland TMA as well as Polaris CTA so called 'Airsport sectors' have
+* been defined.  These are areas that can be opened and used by glider
+* pilots. The sectors are subject to special procedures regarding opening 
+* closing and use.  The following documents apply (Norwegian only):
+* 
+*  http://www.nlf.no/sites/default/files/seilfly/dokument/avtale_luftsportsomrader_oslo_og_farris_tma_10.12.14.pdf
+*  http://www.nlf.no/sites/default/files/seilfly/dokument/luftsportsomrader_2011_telefon_og_frekvenser.pdf
+*  http://www.nlf.no/sites/default/files/seilfly/dokument/veileder_2011_bakkestasjoner.pdf
+*  
+* Foreign pilots are adviced to contact local clubs or staff at
+* Starmoen airfield for more information.
+* 
+* --------------------------------------------------------------------------
+* WARNING
+* 
+* When not open these sectors are controlled airspace, and you need clearance to
+* enter!  The frequencies for these sectors listed in the airspace file is the
+* frequency of the responsible ATC unit.
+* 
+* ATCC may change the altitude granted in open airsport sectors at any
+* time. The altitude listed in this airspace is the standard altitude,
+* but ATCC may give you a different altitude.
+* Beware of this when requesting air sport sectors
+*
+* ==========================================================================
+* CHANGES
+* ==========================================================================
+* 2024 Jun 17 - AMG
+* Add D-number to all glider danger area names
+*
+* 2024 Mar 21 - AMG
+* Updated to new AIP with several changes to airsport areas:
+* - New areas: Tinnsjø, Notodden Vest
+* - Gone: Gvarv
+* - Starmoen G split into two G1 and G2
+* - Starmoen B split into B1 and B2
+* - Handle the overlapping Starmoen G and H better
+* - Type changed to danger areas
+* - Generate extended OpenAir format for SeeYou so it can get more information
+*
+* 2024 Feb 29 - AMG
+* - Changed the wave sectors from local additions to official danger areas from AIP
+* - updated to AIP 127, named R202 to Kollsnes Prosessanlegg
+* - updated to AIP 128: updated geometries for Gauldal, Østre Ara. New: Loen, Arendal sentrum
+* - removing all special agreements until valid source documents can be found
+*
+* 2023 August 10 - CVG
+* - Fixed missing small wavesectors around Bjorli and Oppdal
+*
+* 2023 August 7 - AMG
+* - Automated process to process airspace from http://luftrom.info/
+* - Airsport sectors have been separated out from their containing TMA/CTA.  This should help ensure that
+*   you get warnings when leaving the airsport sector and further entering the TMA/CTA which has not been
+*   opened (both vertically and horizontally)
+* - Radio frequencies have been added to most controlled airspace.  Frequency is for the responsible
+*   ATCC unit.  For airsport sectors which are opened from the ground, you will have to be on the frequency
+*   of the ground station to fly there, not on the frequency listed in the airspace file.
+* - Polaris has been sectorized into ATCC sectors with common frequency.  Names changed to include sector number and frequency.
+* - Updated to AIP 125, removed Gullknapp TIZ, END548 - added END263, Farris TMA 14
+* - Updated to AIP 126, updates to Flesland TMA, Ulven, Tjeldbergodden, Stureterminalen
+* 
+* 2023 April 25 - PML
+* - New Airspace file based on http://luftrom.info/
+* - New airspace file includes latest changes to airspaces (Norway --> Polaris  etc.)
+* - Sweden airspace files removed
+* - Frequencies are removed from airspace titles.
+* - The following is added to AIP file: 
+*            - Information and changelog
+*            - New wave sectors (updated March 2022)
+*            - Lower boundary of glider sectors and wave sectors are set to lower boundary of relevant airspace. 
+*            - Rena danger area  replaced by Rena East/Mid/West according to local agreement
+*            - Local airspaces not part of AIP:
+*                         - Bømoen danger area (parachute)
+*                         - Gullfjellet Glider area (close to Ulven) according to local agreement
+*                         - Kvam transit area (close to Ulven) according to local agreement
+*
+* 2022 April 10 - PML
+* - New Airspace file based on http://luftrom.info/
+* - New airspace file includes latest changes to airspaces (Norway --> Polaris  etc.)
+* - New airspace file includes airspace outside norwegian borders (mainly sweden)
+* - The following is added to AIP file: 
+*            - Information and changelog
+*            - Frequencies included in airspace name. Some airspaces includes several frequencies  up to 6 different. Therefore not all frequencies included.
+*            - New AF line added to each airspace according to openAIR format. Includes frequency (-ies) for airspace.
+*            - New wave sectors (updated March 2022)
+*            - Norwegian border towards Sweden  Finland and Russia
+*            - Rena danger area  replaced by Rena East/Mid/West according to local agreement
+*            - Local airspaces not part of AIP:
+*                         - Bømoen danger area (parachute)
+*                         - Gullfjellet Glider area (close to Ulven) according to local agreement
+*                         - Kvam transit area (close to Ulven) according to local agreement
+*
+* 2020 June 10 - lrb
+* - removed Fagernes TIA and TIZ
+*
+* 2018 April 10 - lrb
+* - Added Gullknapp TIZ
+*
+* 2017 September 04
+* - Ringebu Wave Sector top corrected
+* - Rondane Wave Sector lower corrected
+*
+* 2017 September 02
+* - Sogndal TIZ extended east
+*
+* 2017 June 22 - lrb
+* - Corrected hight in Starmoen C
+*
+* 2017 May 19 - lrb
+* - Added to new areas to KJevik TMA - east against Farris
+*
+* 2017 Mars 11 - lrb
+* - Links for documents updated
+*
+* 2016 September 25 - lrb
+* - Added GULLFJELLET GLIDERAREA  KVAM TRANSITAREA according to local agreement
+*
+* 2016 August 9 - lrb
+* - Added new sport area: Tynset
+*
+* 2016 June 27 - lrb
+* - New publication - errors in previous file
+*
+* 2016 June 22 - lrb
+* - Hvittingfoss A and B changed
+*
+* 2015 June - lrb
+* - New agrement for END 105 Rena - new sectors
+*
+* 2015 May - lrb
+* - Corrected errors
+*
+* 2015 April / March - LRB
+* - Collaboration with Hans Cato Grytnes  HG/PG 
+* - !! New definitions for almost all areas in Norway !!
+* - All changes in curent AIP (05 MAR 2015) are included
+* - Areas north of Trondheim added
+* - A new  detailed detailed description of the Norwegian border towards
+*   Sweden  Finland and Russia
+* - Radio frequencies are added for areas in the AN name tag
+* - Added Rena MIL. This is a reduced size of AIP EN D 105 - Active only by agreement.
+* 
+* ---------------------
+* 2014 March - LRB
+* ---------------------
+* - Simplification: Removed files for scoring  all areas in one file. 
+*   All areas are according to NOR AIP.
+* - Added new Wave sectors in mid Norway.
+* - Added Farris extention to west  two areas published
+*   30 MAY 2013.
+* - Added Hemsedal and Hvittingfoss para/hanggliding sectors
+* - Changed Rena mil area to reflect AIP  agreement has been terminated.
+* 
+* 2013 November - LRB
+* ---------------------
+* - Changed Oslo CTR according to AIP 
+* - Changed Oslo TMA according to AIP 
+* 
+* 2013 April AR
+* ------------------
+* - Has gone through AIP and corrected many errors  among them new TMA
+*   around Kjevik and extended TIA at Notodden.
+* - A complete revamp of file structure (tentatively).
+* 
+* 
+* 2013 April
+* ------------------
+* - Has gone through AIP and corrected many errors  among them new TMA
+*   around Kjevik and extended TIA at Notodden.
+* - A complete revamp of file structure (tentatively).
+* 
+* 
+* 2012 April
+* ------------------
+* - Air sport sectors Starmoen G  Starmoen H and Sundvollen are official.
+*   Altitudes limits on these areas are corrected.
+* - Q Haslemoen taken out (no longer active)
+* - Wave windows for Dagali  Vågå and Frya taken out.
+* - Aisport Sector W Bøverbru is extended and renamed W Eina
+* - Air sport windows within Flesland TMA included (Kvam  Gullifjellet).
+* - Missing polygon for raised ceiling near Rjukan added.
+* - A set of files suitable for scoring using airsport sectors is defined
+* - Files reorganized into a scoring set and a non-scoring set (logical)
+* - References to graphical attributes (such as SB) have been removed from the
+*   files. 
+* 
+* Agnar Renolen
+* 
+* 2011 April
+* ------------------
+* - New TMA around OSL was introduced 7 April 
+* - New Airsport areas was introduced 7 April. ENR SUP 04/11
+*  - New areas:
+*    AIP define these ground  into G airspace. 
+*    We have NOT included G airspace.
+*    - OSL TMA - All sectors
+*    - FARRIS TMA - All sectors
+*    - Starmoen A B C D E F (G H during 2011)
+*    - Hokksund A B
+*    - Eggemoen A B
+*    - Hvittingfoss A B
+*    - Gvarv
+*    - Lunde
+*    - Bøverbu
+*    - Drangedal
+*    - Kvam transistion
+*    - Gullifjellet
+*    Pleas note: The hight of these areas can differ  dependent of 
+*    clearence! Areas Starmoen G H and Sundvollen are for information 
+*    purouses only. Theese will probably be included in AIP during 2011.
+* - Changes around Røros  larger and lower CTR and TMA
+* - New D airspace over Tynset  was class E  now Class D
+* - New D airspace Åndalsnes  Kvikne and Rindal 
+* - Changes and additions to Fagernes Leirin  larger TIA / TIZ
+* - Lista areas removed
+* - Added EN D104 Bradalsmyra 
+* - Fjellhaug D115 removed
+* - Removed Rena military HAHO Areas - no longer in use
+* - Note to Winpilot users; this setting can be usefull: SB -1 -1 -1
+* 
+* 2010
+* ------------------
+* - Added Rena HAHO areas. 
+*   (HAHO: High Altitude  High Opening - Military parachute training)
+* 
+* 2009 
+* ------------------
+* - New Competition area for Starmoen  now covers Norway south of Namsos.
+* - Changed Airspase type (AC) from TIZ and TIA to R
+* - Ajustmenst along NO / SW border  both Competition area and airspace.
+* - Removed color coding (SP SB)
+* - Ensured WinPilot compability
+* - Minor bug fixes
+* 
+* 2008:
+* ------------------
+* - The roof of the competition area are now harmonized with AIP / ENR of 
+*   March 2008  most importent new hights up to FL 135 in some areas.
+* - Due to scoring options  the danger areas that _can_ be open or closed 
+*   have been moved into separate files.
+* - Danger areas names have been changed to the actual name and heights 
+*   have been corrected.
+* - R167 and R168 have been removed  as they no longer exist.
+* - Oslo  Kjevik  Rygge  Torp and Røros: 
+*   TMA and CTR has changed size in AIP / ENR
+* - Notodden  Sogndal and Sørstokken 
+*   Added or changed TIZ area
+* - Added Sola  Haugesund  Flesland  Ålesund  Ørlandet
+*   TMA and CTR and more on the west coast.
+* - Added files for Wawe windows at Vågå  Frya and Dagali
+* - Changed Fagernes CTR to TIZ
+* - Added Geiteryggen TIZ
+* - Changed Farris TMA to Class C
+* - Added several Danger and Restriction areas
+* - All filenames now have the year in its name for validity purposes.
+* 
+* ------------------
+*
